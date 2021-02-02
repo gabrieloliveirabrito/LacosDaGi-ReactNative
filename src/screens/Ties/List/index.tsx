@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react"
+import React, { PureComponent } from "react"
 import { FlatList, View, ActivityIndicator, Alert } from "react-native"
-import { NavigationProp } from "@react-navigation/native"
-import { Container, Header, Body, Button, Text } from "native-base"
+import { NavigationProp, useNavigation } from "@react-navigation/native"
+import { Container, Header, Body, Button, Text, Spinner as NBSpinner } from "native-base"
+import Spinner from "react-native-loading-spinner-overlay"
+
 import Entypo from "react-native-vector-icons/Entypo"
-import { Tie } from "../../../services/database/models"
+import { Tie } from "services/database/models"
 import { TieCard } from "./components"
 import { Tie1, Tie2, Tie3 } from "./TieImages"
 
@@ -30,79 +32,107 @@ const baseTies: Tie[] = [{
 }
 ]
 
-interface ListState {
-    ties: Tie[]
-    loaded: boolean
-    page: number
-}
-
-interface TieListProps {
+interface ListProps {
     navigation: NavigationProp<any, any>
 }
 
-export default class List extends React.PureComponent<TieListProps, ListState> {
-    constructor(props: TieListProps) {
-        super(props)
-        const { navigation } = props
+interface ListState {
+    loaded: boolean
+    ties: Tie[]
+    page: number
+}
 
-        this.state = {
-            ties: [], loaded: false, page: 1
-        }
+const defaultState = {
+    loaded: false,
+    ties: [],
+    page: 1
+}
+
+export default class List extends React.Component<ListProps, ListState> {
+    constructor(props: any) {
+        super(props)
+
+        this.state = defaultState
+    }
+
+    componentDidMount() {
+        const { navigation } = this.props
+        const { loaded } = this.state
 
         navigation.setOptions({
             headerRight: () => (
                 <View style={{ flexDirection: "row" }}>
-                    <Button style={{ margin: 5 }} bordered icon onPress={() => navigation.navigate("TieCreate")}>
-                        <Entypo name="plus" color="white" size={30} />
+                    <Button style={{ backgroundColor: "transparent", borderWidth: 0, elevation: 0 }} bordered icon onPress={() => navigation.navigate("TieCreate")}>
+                        <Entypo name="arrow-left" color="white" size={30} />
+                    </Button>
+                    <Button style={{ backgroundColor: "transparent", borderWidth: 0, elevation: 0 }} bordered icon onPress={() => navigation.navigate("TieCreate")}>
+                        <Entypo name="arrow-right" color="white" size={30} />
                     </Button>
                 </View>
             ),
         });
-    }
-
-    async componentDidMount() {
-        const { loaded } = this.state
 
         if (!loaded)
-            await this.loadTies()
+            this.loadTies()
     }
 
-    renderTieCard = (tie: Tie) => <TieCard tie={tie} />
+    clear = () => {
+        this.setState(defaultState)
+    }
 
     loadTies = async () => {
-        const { page, ties } = this.state
-        const delay = time => new Promise(res => setTimeout(res, time));
+        const { loaded, page } = this.state
 
-        if (page < 10) {
-            this.setState({ loaded: false })
-            delay(1000)
-            this.setState({ ties: [...ties, ...baseTies], page: page + 1 })
-            delay(200)
-            this.setState({ loaded: true })
+        if (page < 30) {
+            const delay = time => new Promise(res => setTimeout(res, time));
+            console.log(loaded, page)
+
+            await delay(200)
+            this.setState(prev => ({ loaded: true, ties: [...prev.ties, ...baseTies], page: prev.page + 1 }))
+            console.log("Carregado")
         }
     }
 
-    renderFooter = () => {
-        const { loaded } = this.state
-        if (loaded) return null;
+    renderTieCard = (tie: Tie) => {
+        return <TieCard tie={tie} navigation={this.props.navigation} />
+    }
 
-        return <View style={{ alignSelf: 'center', marginVertical: 20 }}>
-            <ActivityIndicator size={30} color="red" />
-        </View>
+    renderList = () => {
+        const { loaded, ties } = this.state
+
+        if (loaded) {
+            if (ties.length == 0)
+                return <Text>Nenhum laço cadastrado</Text>
+            else
+                return <FlatList
+                    style={{}}
+                    data={ties}
+                    renderItem={(item) => this.renderTieCard(item.item)}
+                    keyExtractor={(item, index) => (item.id * index + (Math.random() * 1000)).toString()}
+                    onEndReached={this.loadTies}
+                    onEndReachedThreshold={0.5}
+                />
+        } else return null
+    }
+
+    shouldComponentUpdate(_: ListProps, nextState: ListState) {
+        if (nextState.loaded !== this.state.loaded || nextState.page !== this.state.page)
+            return true
+        return false
     }
 
     render() {
-        const { ties } = this.state
+        const { loaded, ties } = this.state
 
-        return <FlatList
-            style={{}}
-            contentContainerStyle={{}}
-            data={ties}
-            renderItem={(item) => this.renderTieCard(item.item)}
-            keyExtractor={(item, index) => (item.id * index + (Math.random() * 1000)).toString()}
-            onEndReached={this.loadTies}
-            onEndReachedThreshold={0.1}
-            ListFooterComponent={this.renderFooter}
-        />
+        return <Container>
+            <Spinner
+                animation="fade"
+                visible={!loaded}
+                textContent={'Carregando laços...'}
+                textStyle={{ color: "white" }}
+                customIndicator={<NBSpinner color="white" size={50} />}
+            />
+            {this.renderList()}
+        </Container>
     }
 }

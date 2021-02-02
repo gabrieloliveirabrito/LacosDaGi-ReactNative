@@ -1,4 +1,4 @@
-import List from "./List"
+import List from "./List/index.func"
 import Create from "./Create"
 import View from "./View"
 

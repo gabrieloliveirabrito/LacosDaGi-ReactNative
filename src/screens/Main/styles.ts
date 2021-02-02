@@ -19,7 +19,7 @@ export default StyleSheet.create({
         fontSize: 30,
         fontWeight: "bold",
         paddingBottom: 30,
-        color: "white"
+        color: "white",
     },
     navigateButton: {
         flex: 1,

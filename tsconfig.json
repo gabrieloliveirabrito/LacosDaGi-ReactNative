@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
     "target": "esnext",
     "module": "commonjs",
     "lib": [
@@ -16,7 +15,12 @@
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": "./src",
+    "typeRoots": [
+      "node_modules/@types",
+      "src/modules"
+    ]
   },
   "include": [
     "./src/**/*.ts",

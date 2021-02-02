@@ -2,11 +2,8 @@ import {
     Entity,
     Column,
     PrimaryGeneratedColumn,
-    ManyToOne,
-    OneToMany
 } from 'typeorm/browser';
 
-import Sale from "./Sale"
 
 @Entity('client')
 export default class Client {
